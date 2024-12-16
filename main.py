@@ -11,14 +11,14 @@ phone_id = os.environ.get("PHONE_ID")
 phone = os.environ.get("PHONE_NUMBER")
 name = "Lakshitha"  # The bot will consider this person as its owner or creator
 bot_name = "Asuna"  # This will be the name of your bot
-model_name = "gemini-1.5-flash"  # Use "gemini-1.0-pro" if needed
+model_name = "gemini-2.0-flash-exp"  # Use "gemini-1.0-pro" if needed
 
 app = Flask(__name__)
 
 generation_config = {
     "temperature": 1,
     "top_p": 0.95,
-    "top_k": 0,
+    "top_k": 40,
     "max_output_tokens": 8192,
 }
 
