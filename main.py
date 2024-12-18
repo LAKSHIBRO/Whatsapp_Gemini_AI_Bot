@@ -10,7 +10,7 @@ phone_id=os.environ.get("PHONE_ID")
 phone=os.environ.get("PHONE_NUMBER")
 name="Lakshitha" #The bot will consider this person as its owner or creator
 bot_name="Asuna" #This will be the name of your bot, eg: "Hello I am Astro Bot"
-model_name="tunedModels/dulans-1vhc130ogsbr" #Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
+model_name="tunedModels/dulans-rb81frr60gqf" #Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
 
 app=Flask(__name__)
 
@@ -21,6 +21,7 @@ generation_config = {
   "max_output_tokens": 8192,
   "response_mime_type": "text/plain",
 }
+
 
 # safety_settings = [
 #   {"category": "HARM_CATEGORY_HARASSMENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
