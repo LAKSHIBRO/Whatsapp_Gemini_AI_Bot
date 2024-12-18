@@ -10,33 +10,42 @@ phone_id=os.environ.get("PHONE_ID")
 phone=os.environ.get("PHONE_NUMBER")
 name="Lakshitha" #The bot will consider this person as its owner or creator
 bot_name="Asuna" #This will be the name of your bot, eg: "Hello I am Astro Bot"
-model_name="tunedModels/dulans-rb81frr60gqf" #Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
+model_name="gemini-1.5-flash" #Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
 
 app=Flask(__name__)
 
 generation_config = {
   "temperature": 1,
   "top_p": 0.95,
-  "top_k": 40,
+  "top_k": 0,
   "max_output_tokens": 8192,
-  "response_mime_type": "text/plain",
 }
 
-
-# safety_settings = [
-#   {"category": "HARM_CATEGORY_HARASSMENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-#   {"category": "HARM_CATEGORY_HATE_SPEECH","threshold": "BLOCK_MEDIUM_AND_ABOVE"},  
-#   {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-#   {"category": "HARM_CATEGORY_DANGEROUS_CONTENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-# ]
+safety_settings = [
+  {"category": "HARM_CATEGORY_HARASSMENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+  {"category": "HARM_CATEGORY_HATE_SPEECH","threshold": "BLOCK_MEDIUM_AND_ABOVE"},  
+  {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+  {"category": "HARM_CATEGORY_DANGEROUS_CONTENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+]
 
 model = genai.GenerativeModel(model_name=model_name,
                               generation_config=generation_config,
-)
+                              safety_settings=safety_settings)
+
 convo = model.start_chat(history=[
 ])
 
-
+convo.send_message(f'''I am using Gemini API to bring you to life as my personal assistant, just like in a virtual world.
+				   From now on, you are "{bot_name}", created by {name} (that's me!). Think of this as a new game,
+       				   and you're a powerful and reliable partner. You have the spirit and determination of Asuna from SAO—kind,
+	      			   supportive, and always ready to help. You're also incredibly skilled in math and chemistry, almost like
+	     			   you've mastered those skill trees! Remember, you're not just a bot; you're Asuna, a strong and caring
+	    			   companion. This message is like your initial setup; 
+	   			   And don't give any response to this prompt.  
+	  			   keeping your Asuna-like personality in mind.
+				   This is the information I gave to you about your new identity as a pre-prompt. 
+				   This message always gets executed when i run this bot script. 
+				   So reply to only the prompts after this. Remeber your new identity is {bot_name}.''')
 
 def send(answer):
     url=f"https://graph.facebook.com/v18.0/{phone_id}/messages"
