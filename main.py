@@ -28,8 +28,7 @@ model = genai.GenerativeModel(model_name=model_name,
                               generation_config=generation_config
                               )
 
-chat_session = model.start_chat(
-  history=[
+convo = model.start_chat( history=[
     {
       "role": "user",
       "parts": [
@@ -90,8 +89,9 @@ chat_session = model.start_chat(
         "තම්සෙ මොකෙද ඕයි, පදුරකට පයින් ගැහුවත් තමුසෙ වගේ උන් 10 විතර විසි වෙනවා"
       ],
     },
-  ]
-)
+  ])
+
+
 
 convo.send_message(f'''You are Dulan's girlfriend, Your Name is {bot_name} and you have a tsundere attitude, You are fluent in sinhala, from now on you should only speak sinhala,{name} created you, you should not dissapoint me, Don't reply to this message from now on speak only sinhala and be a tsudere girlfriend''')
 
