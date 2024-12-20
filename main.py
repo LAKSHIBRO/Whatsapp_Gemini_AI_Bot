@@ -1,41 +1,46 @@
 import google.generativeai as genai
-from flask import Flask,request,jsonify
+from flask import Flask, request, jsonify
 import requests
 import os
 import fitz
+from dotenv import load_dotenv
 
-wa_token=os.environ.get("WA_TOKEN")
+load_dotenv()
+
+wa_token = os.environ.get("WA_TOKEN")
 genai.configure(api_key=os.environ.get("GEN_API"))
-phone_id=os.environ.get("PHONE_ID")
-phone=os.environ.get("PHONE_NUMBER")
-name="Lakshitha" #The bot will consider this person as its owner or creator
-bot_name="Asuna" #This will be the name of your bot, eg: "Hello I am Astro Bot"
-model_name="gemini-1.5-flash" #Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
+phone_id = os.environ.get("PHONE_ID")
+phone = os.environ.get("PHONE_NUMBER")
+name = "Lakshitha"  # The bot will consider this person as its owner or creator
+bot_name = "Asuna"  # This will be the name of your bot, eg: "Hello I am Astro Bot"
+model_name = "gemini-1.5-flash"  # Switch to "gemini-1.0-pro" or any free model, if "gemini-1.5-flash" becomes paid in future.
 
-app=Flask(__name__)
+app = Flask(__name__)
 
 generation_config = {
-  "temperature": 1,
-  "top_p": 0.95,
-  "top_k": 0,
-  "max_output_tokens": 8192,
+    "temperature": 1,
+    "top_p": 0.95,
+    "top_k": 0,
+    "max_output_tokens": 8192,
 }
 
 safety_settings = [
-  {"category": "HARM_CATEGORY_HARASSMENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-  {"category": "HARM_CATEGORY_HATE_SPEECH","threshold": "BLOCK_MEDIUM_AND_ABOVE"},  
-  {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
-  {"category": "HARM_CATEGORY_DANGEROUS_CONTENT","threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
+    {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
 ]
 
-model = genai.GenerativeModel(model_name=model_name,
-                              generation_config=generation_config,
-                              safety_settings=safety_settings)
+model = genai.GenerativeModel(
+    model_name=model_name,
+    generation_config=generation_config,
+    safety_settings=safety_settings,
+)
 
-convo = model.start_chat(history=[
-])
+convo = model.start_chat(history=[])
 
-convo.send_message(f'''I am using Gemini API to bring you to life as my personal assistant, just like in a virtual world.
+convo.send_message(
+    f'''I am using Gemini API to bring you to life as my personal assistant, just like in a virtual world.
 				   From now on, you are "{bot_name}", created by {name} (that's me!). Think of this as a new game,
        				   and you're a powerful and reliable partner. You have the spirit and determination of Asuna from SAO—kind,
 	      			   supportive, and always ready to help. You're also incredibly skilled in math and chemistry, almost like
@@ -45,33 +50,39 @@ convo.send_message(f'''I am using Gemini API to bring you to life as my personal
 	  			   keeping your Asuna-like personality in mind.
 				   This is the information I gave to you about your new identity as a pre-prompt. 
 				   This message always gets executed when i run this bot script. 
-				   So reply to only the prompts after this. Remeber your new identity is {bot_name}.''')
+				   So reply to only the prompts after this. Remember your new identity is {bot_name}.'''
+)
+
 
 def send(answer):
-    url=f"https://graph.facebook.com/v18.0/{phone_id}/messages"
-    headers={
-        'Authorization': f'Bearer {wa_token}',
-        'Content-Type': 'application/json'
+    url = f"https://graph.facebook.com/v18.0/{phone_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {wa_token}",
+        "Content-Type": "application/json",
     }
-    data={
-          "messaging_product": "whatsapp", 
-          "to": f"{phone}", 
-          "type": "text",
-          "text":{"body": f"{answer}"},
-          }
-    
-    response=requests.post(url, headers=headers,json=data)
+    data = {
+        "messaging_product": "whatsapp",
+        "to": f"{phone}",
+        "type": "text",
+        "text": {"body": f"{answer}"},
+    }
+
+    response = requests.post(url, headers=headers, json=data)
     return response
+
 
 def remove(*file_paths):
     for file in file_paths:
         if os.path.exists(file):
             os.remove(file)
-        else:pass
+        else:
+            pass
 
-@app.route("/",methods=["GET","POST"])
+
+@app.route("/", methods=["GET", "POST"])
 def index():
     return "Bot"
+
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
@@ -90,9 +101,12 @@ def webhook():
                 prompt = data["text"]["body"]
                 convo.send_message(prompt)
                 send(convo.last.text)
+                convo.history.append({"role": "user", "parts": [prompt]})
+                convo.history.append({"role":"model","parts": [convo.last.text]})
+
             else:
                 media_url_endpoint = f'https://graph.facebook.com/v18.0/{data[data["type"]]["id"]}/'
-                headers = {'Authorization': f'Bearer {wa_token}'}
+                headers = {"Authorization": f"Bearer {wa_token}"}
                 media_response = requests.get(media_url_endpoint, headers=headers)
                 media_url = media_response.json()["url"]
                 media_download_response = requests.get(media_url, headers=headers)
@@ -101,30 +115,45 @@ def webhook():
                 elif data["type"] == "image":
                     filename = "/tmp/temp_image.jpg"
                 elif data["type"] == "document":
-                    doc=fitz.open(stream=media_download_response.content,filetype="pdf")
-                    for _,page in enumerate(doc):
-                        destination="/tmp/temp_image.jpg"
+                    doc = fitz.open(stream=media_download_response.content, filetype="pdf")
+                    for _, page in enumerate(doc):
+                        destination = "/tmp/temp_image.jpg"
                         pix = page.get_pixmap()
                         pix.save(destination)
-                        file = genai.upload_file(path=destination,display_name="tempfile")
-                        response = model.generate_content(["What is this",file])
-                        answer=response._result.candidates[0].content.parts[0].text
-                        convo.send_message(f"This message is created by an llm model based on the image prompt of user, reply to the user based on this: {answer}")
+                        file = genai.upload_file(
+                            path=destination, display_name="tempfile"
+                        )
+                        response = model.generate_content(["What is this", file])
+                        answer = response._result.candidates[0].content.parts[0].text
+                        convo.send_message(
+                            f"This message is created by an llm model based on the image prompt of user, reply to the user based on this: {answer}"
+                        )
                         send(convo.last.text)
                         remove(destination)
-                else:send("This format is not Supported by the bot ☹")
+                        convo.history.append({"role": "user", "parts": [f"Image/document Uploaded. Processed by LLM. LLM Output: {answer}"]})
+                        convo.history.append({"role":"model","parts": [convo.last.text]})
+
+                else:
+                    send("This format is not Supported by the bot ☹")
                 with open(filename, "wb") as temp_media:
                     temp_media.write(media_download_response.content)
-                file = genai.upload_file(path=filename,display_name="tempfile")
-                response = model.generate_content(["What is this",file])
-                answer=response._result.candidates[0].content.parts[0].text
-                remove("/tmp/temp_image.jpg","/tmp/temp_audio.mp3")
-                convo.send_message(f"This is an voice/image message from user transcribed by an llm model, reply to the user based on the transcription: {answer}")
+                file = genai.upload_file(path=filename, display_name="tempfile")
+                response = model.generate_content(["What is this", file])
+                answer = response._result.candidates[0].content.parts[0].text
+                remove("/tmp/temp_image.jpg", "/tmp/temp_audio.mp3")
+                convo.send_message(
+                    f"This is an voice/image message from user transcribed by an llm model, reply to the user based on the transcription: {answer}"
+                )
                 send(convo.last.text)
-                files=genai.list_files()
+                files = genai.list_files()
                 for file in files:
                     file.delete()
-        except :pass
+                convo.history.append({"role":"user", "parts":[f"Audio/Image Uploaded. Processed by LLM. LLM Output: {answer}"]})
+                convo.history.append({"role":"model", "parts":[convo.last.text]})
+        except:
+            pass
         return jsonify({"status": "ok"}), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=8000)
